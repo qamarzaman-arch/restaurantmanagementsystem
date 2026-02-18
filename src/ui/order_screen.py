@@ -1,11 +1,13 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QComboBox, QHeaderView, QMessageBox, QScrollArea,
-                             QGridLayout, QFrame, QDoubleSpinBox)
+                             QGridLayout, QFrame, QDoubleSpinBox, QLineEdit)
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.logic.billing import BillingLogic
 from src.utils.pdf_generator import PDFGenerator
+from src.utils.printer_utils import PrinterUtils
 import datetime
+import os
 
 class OrderScreen(QWidget):
     def __init__(self, db_manager):
@@ -33,6 +35,15 @@ class OrderScreen(QWidget):
         table_nav.addWidget(self.start_order_btn)
 
         left_layout.addLayout(table_nav)
+
+        # Search Bar
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Search Item:"))
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Enter item name...")
+        self.search_input.textChanged.connect(lambda: self.refresh_items())
+        search_layout.addWidget(self.search_input)
+        left_layout.addLayout(search_layout)
 
         # Categories
         self.cat_tabs = QHBoxLayout()
@@ -125,13 +136,25 @@ class OrderScreen(QWidget):
             self.cat_tabs.addWidget(btn)
 
     def refresh_items(self, cat_id=None):
-        # Clear grid
-        while self.items_grid.count():
-            item = self.items_grid.takeAt(0)
-            if item.widget(): item.widget().deleteLater()
+        if not hasattr(self, 'current_cat_id'):
+            self.current_cat_id = None
 
-        items = self.db.get_menu_items(cat_id)
-        for i, item in enumerate(items):
+        if cat_id is not None:
+            self.current_cat_id = cat_id
+
+        # Clear grid robustly
+        for i in reversed(range(self.items_grid.count())):
+            widget = self.items_grid.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+
+        items = self.db.get_menu_items(self.current_cat_id)
+        search_text = self.search_input.text().lower()
+
+        filtered_items = [i for i in items if search_text in i['name'].lower()]
+
+        for i, item in enumerate(filtered_items):
             btn = QPushButton(f"{item['name']}\n{item['price']:.2f}")
             btn.setFixedSize(120, 80)
             btn.clicked.connect(lambda checked, it=item: self.add_to_cart(it))
@@ -216,7 +239,16 @@ class OrderScreen(QWidget):
             except Exception as pdf_err:
                 pdf_msg = f"\nWarning: Could not generate PDF: {str(pdf_err)}"
 
-            QMessageBox.information(self, "Success", f"Order completed!{pdf_msg}")
+            # Thermal Printing
+            printer_name = settings.get('printer_name', 'Default')
+            if printer_name == 'Default': printer_name = None
+            try:
+                PrinterUtils.print_receipt(order_data, settings, printer_name)
+                print_msg = "\nReceipt sent to printer."
+            except Exception as p_err:
+                print_msg = f"\nWarning: Printing failed: {str(p_err)}"
+
+            QMessageBox.information(self, "Success", f"Order completed!{pdf_msg}{print_msg}")
 
             # Reset
             self.current_order_id = None

@@ -1,6 +1,6 @@
 from reportlab.lib.pagesizes import A6
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet
 import os
 
@@ -11,6 +11,16 @@ class PDFGenerator:
         elements = []
         styles = getSampleStyleSheet()
 
+        # Logo
+        logo_path = settings.get('logo_path')
+        if logo_path and os.path.exists(logo_path):
+            try:
+                img = Image(logo_path, width=50, height=50)
+                img.hAlign = 'CENTER'
+                elements.append(img)
+            except:
+                pass
+
         # Header
         elements.append(Paragraph(f"<b>{settings.get('restaurant_name', 'Restaurant')}</b>", styles['Title']))
         elements.append(Paragraph(settings.get('address', ''), styles['Normal']))
@@ -19,8 +29,8 @@ class PDFGenerator:
         # Order Info
         elements.append(Paragraph(f"Order ID: {order['id']}", styles['Normal']))
         elements.append(Paragraph(f"Date: {order['created_at']}", styles['Normal']))
-        if order.get('table_id'):
-            elements.append(Paragraph(f"Table: {order.get('table_id')}", styles['Normal']))
+        if order.get('table_number'):
+            elements.append(Paragraph(f"Table: {order.get('table_number')}", styles['Normal']))
         elements.append(Spacer(1, 10))
 
         # Items Table

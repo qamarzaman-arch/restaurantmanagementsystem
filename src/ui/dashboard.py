@@ -25,10 +25,13 @@ class DashboardScreen(QWidget):
         self.total_sales = self.create_stat_card("Total Sales Today", "0.00")
         self.total_orders = self.create_stat_card("Orders Today", "0")
         self.active_tables = self.create_stat_card("Active Tables", "0")
+        self.low_stock_card = self.create_stat_card("Low Stock Items", "0")
+        self.low_stock_card.setStyleSheet(self.low_stock_card.styleSheet() + " QFrame { border-left: 5px solid #e74c3c; }")
 
         stats_layout.addWidget(self.total_sales, 0, 0)
         stats_layout.addWidget(self.total_orders, 0, 1)
         stats_layout.addWidget(self.active_tables, 0, 2)
+        stats_layout.addWidget(self.low_stock_card, 0, 3)
         layout.addLayout(stats_layout)
 
         # Charts Row 1
@@ -101,9 +104,13 @@ class DashboardScreen(QWidget):
         tables = self.db.get_tables()
         active = len([t for t in tables if t['status'] == 'Occupied'])
 
+        inventory = self.db.get_inventory()
+        low_stock_count = len([i for i in inventory if i['quantity'] <= i['min_threshold']])
+
         self.total_sales.value_label.setText(f"${total_revenue:.2f}")
         self.total_orders.value_label.setText(str(count))
         self.active_tables.value_label.setText(str(active))
+        self.low_stock_card.value_label.setText(str(low_stock_count))
 
         self.update_charts()
 
@@ -156,9 +163,10 @@ class DashboardScreen(QWidget):
         series.setName("Sales")
 
         data = self.db.get_weekly_sales_trend()
+        categories = []
         for i, item in enumerate(data):
-            # For simplicity, we use index i. In a real app we'd use timestamp.
             series.append(i, item['daily_total'])
+            categories.append(item['sale_date'])
 
         chart = self.trend_chart_view.chart()
         chart.removeAllSeries()
@@ -167,8 +175,8 @@ class DashboardScreen(QWidget):
         for axis in chart.axes():
             chart.removeAxis(axis)
 
-        axisX = QValueAxis()
-        axisX.setTitleText("Days (Recent)")
+        axisX = QBarCategoryAxis()
+        axisX.append(categories)
         chart.addAxis(axisX, Qt.AlignmentFlag.AlignBottom)
         series.attachAxis(axisX)
 

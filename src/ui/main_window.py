@@ -7,6 +7,10 @@ from src.ui.order_screen import OrderScreen
 from src.ui.dashboard import DashboardScreen
 from src.ui.reports_screen import ReportsScreen
 from src.ui.customer_mgmt import CustomerManagementScreen
+from src.ui.inventory_mgmt import InventoryManagementScreen
+from src.ui.settings_screen import SettingsScreen
+from src.ui.user_mgmt import UserManagementScreen
+from src.ui.order_history import OrderHistoryScreen
 
 class MainWindow(QMainWindow):
     def __init__(self, db_manager, user):
@@ -40,17 +44,19 @@ class MainWindow(QMainWindow):
         nav_items = [
             ("Dashboard", "dashboard"),
             ("Orders", "orders"),
+            ("Order History", "history"),
             ("Customers", "customers"),
             ("Menu Management", "menu"),
             ("Table Management", "tables"),
             ("Inventory", "inventory"),
             ("Reports", "reports"),
+            ("Users", "users"),
             ("Settings", "settings"),
         ]
 
         # Filter based on role if needed
         if self.user['role'] != 'Admin':
-            nav_items = [i for i in nav_items if i[1] in ['dashboard', 'orders', 'tables']]
+            nav_items = [i for i in nav_items if i[1] in ['dashboard', 'orders', 'history', 'customers', 'tables']]
 
         for label, name in nav_items:
             btn = QPushButton(label)
@@ -98,14 +104,21 @@ class MainWindow(QMainWindow):
         self.pages['customers'] = CustomerManagementScreen(self.db)
         self.content_stack.addWidget(self.pages['customers'])
 
-        # Other placeholders
-        for name in ['inventory', 'settings']:
-            if name not in self.pages:
-                page = QWidget()
-                layout = QVBoxLayout(page)
-                layout.addWidget(QLabel(f"<h1>{name.capitalize()} Page</h1>"))
-                self.content_stack.addWidget(page)
-                self.pages[name] = page
+        # Inventory Management
+        self.pages['inventory'] = InventoryManagementScreen(self.db)
+        self.content_stack.addWidget(self.pages['inventory'])
+
+        # Order History
+        self.pages['history'] = OrderHistoryScreen(self.db)
+        self.content_stack.addWidget(self.pages['history'])
+
+        # User Management
+        self.pages['users'] = UserManagementScreen(self.db)
+        self.content_stack.addWidget(self.pages['users'])
+
+        # Settings
+        self.pages['settings'] = SettingsScreen(self.db)
+        self.content_stack.addWidget(self.pages['settings'])
 
         main_layout.addWidget(self.content_stack)
 

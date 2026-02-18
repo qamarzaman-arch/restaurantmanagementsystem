@@ -149,6 +149,23 @@ class DatabaseManager:
                 return dict(user)
         return None
 
+    def get_users(self):
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute("SELECT id, username, role, full_name FROM users").fetchall()]
+
+    def update_user(self, user_id, **kwargs):
+        if 'password' in kwargs:
+            kwargs['password'] = generate_password_hash(kwargs['password'])
+
+        cols = ", ".join([f"{k} = ?" for k in kwargs.keys()])
+        params = list(kwargs.values()) + [user_id]
+        with self.get_connection() as conn:
+            conn.execute(f"UPDATE users SET {cols} WHERE id = ?", params)
+
+    def delete_user(self, user_id):
+        with self.get_connection() as conn:
+            conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
     # Settings Management
     def set_setting(self, key, value):
         with self.get_connection() as conn:
@@ -253,7 +270,13 @@ class DatabaseManager:
 
     def get_order(self, order_id):
         with self.get_connection() as conn:
-            order = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+            query = """
+                SELECT o.*, t.table_number
+                FROM orders o
+                LEFT JOIN restaurant_tables t ON o.table_id = t.id
+                WHERE o.id = ?
+            """
+            order = conn.execute(query, (order_id,)).fetchone()
             if not order: return None
             items = conn.execute(
                 "SELECT oi.*, m.name FROM order_items oi JOIN menu_items m ON oi.menu_item_id = m.id WHERE oi.order_id = ?",
@@ -312,6 +335,10 @@ class DatabaseManager:
     def get_inventory(self):
         with self.get_connection() as conn:
             return [dict(row) for row in conn.execute("SELECT * FROM inventory").fetchall()]
+
+    def delete_inventory_item(self, item_id):
+        with self.get_connection() as conn:
+            conn.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
 
     # Customers
     def add_customer(self, name, phone, email=""):

@@ -40,18 +40,33 @@ class CustomerManagementScreen(QWidget):
         layout.addLayout(form_layout, 1)
 
         # Right side: Table
+        right_layout = QVBoxLayout()
+
+        search_layout = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search customers by name or phone...")
+        self.search_input.textChanged.connect(self.refresh_table)
+        search_layout.addWidget(self.search_input)
+        right_layout.addLayout(search_layout)
+
         self.customer_table = QTableWidget()
         self.customer_table.setColumnCount(5)
         self.customer_table.setHorizontalHeaderLabels(["ID", "Name", "Phone", "Email", "Points"])
         self.customer_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        layout.addWidget(self.customer_table, 3)
+        right_layout.addWidget(self.customer_table)
+
+        layout.addLayout(right_layout, 3)
 
         self.refresh_table()
 
     def refresh_table(self):
+        search_text = self.search_input.text().lower()
         customers = self.db.get_customers()
-        self.customer_table.setRowCount(len(customers))
-        for i, cust in enumerate(customers):
+
+        filtered = [c for c in customers if search_text in c['name'].lower() or search_text in (c['phone'] or "").lower()]
+
+        self.customer_table.setRowCount(len(filtered))
+        for i, cust in enumerate(filtered):
             self.customer_table.setItem(i, 0, QTableWidgetItem(str(cust['id'])))
             self.customer_table.setItem(i, 1, QTableWidgetItem(cust['name']))
             self.customer_table.setItem(i, 2, QTableWidgetItem(cust['phone']))
