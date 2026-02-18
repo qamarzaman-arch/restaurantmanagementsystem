@@ -108,6 +108,18 @@ class DatabaseManager:
                 )
             ''')
 
+            # Customers table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS customers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    phone TEXT UNIQUE,
+                    email TEXT,
+                    points INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
             conn.commit()
 
             # Seed default admin if not exists
@@ -300,3 +312,64 @@ class DatabaseManager:
     def get_inventory(self):
         with self.get_connection() as conn:
             return [dict(row) for row in conn.execute("SELECT * FROM inventory").fetchall()]
+
+    # Customers
+    def add_customer(self, name, phone, email=""):
+        try:
+            with self.get_connection() as conn:
+                conn.execute(
+                    "INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)",
+                    (name, phone, email)
+                )
+                return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def get_customers(self):
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute("SELECT * FROM customers").fetchall()]
+
+    def update_customer(self, cust_id, **kwargs):
+        cols = ", ".join([f"{k} = ?" for k in kwargs.keys()])
+        params = list(kwargs.values()) + [cust_id]
+        with self.get_connection() as conn:
+            conn.execute(f"UPDATE customers SET {cols} WHERE id = ?", params)
+
+    # Insights
+    def get_sales_by_category(self):
+        query = """
+            SELECT c.name, SUM(oi.quantity * oi.price) as total_sales
+            FROM categories c
+            JOIN menu_items m ON c.id = m.category_id
+            JOIN order_items oi ON m.id = oi.menu_item_id
+            JOIN orders o ON oi.order_id = o.id
+            WHERE o.status = 'Completed'
+            GROUP BY c.name
+        """
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute(query).fetchall()]
+
+    def get_top_selling_items(self, limit=5):
+        query = """
+            SELECT m.name, SUM(oi.quantity) as total_qty
+            FROM menu_items m
+            JOIN order_items oi ON m.id = oi.menu_item_id
+            JOIN orders o ON oi.order_id = o.id
+            WHERE o.status = 'Completed'
+            GROUP BY m.name
+            ORDER BY total_qty DESC
+            LIMIT ?
+        """
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute(query, (limit,)).fetchall()]
+
+    def get_weekly_sales_trend(self):
+        query = """
+            SELECT date(created_at) as sale_date, SUM(total) as daily_total
+            FROM orders
+            WHERE status = 'Completed' AND created_at >= date('now', '-7 days')
+            GROUP BY sale_date
+            ORDER BY sale_date ASC
+        """
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute(query).fetchall()]

@@ -6,6 +6,7 @@ from src.ui.table_mgmt import TableManagementScreen
 from src.ui.order_screen import OrderScreen
 from src.ui.dashboard import DashboardScreen
 from src.ui.reports_screen import ReportsScreen
+from src.ui.customer_mgmt import CustomerManagementScreen
 
 class MainWindow(QMainWindow):
     def __init__(self, db_manager, user):
@@ -39,6 +40,7 @@ class MainWindow(QMainWindow):
         nav_items = [
             ("Dashboard", "dashboard"),
             ("Orders", "orders"),
+            ("Customers", "customers"),
             ("Menu Management", "menu"),
             ("Table Management", "tables"),
             ("Inventory", "inventory"),
@@ -92,6 +94,10 @@ class MainWindow(QMainWindow):
         self.pages['reports'] = ReportsScreen(self.db)
         self.content_stack.addWidget(self.pages['reports'])
 
+        # Customer Management
+        self.pages['customers'] = CustomerManagementScreen(self.db)
+        self.content_stack.addWidget(self.pages['customers'])
+
         # Other placeholders
         for name in ['inventory', 'settings']:
             if name not in self.pages:
@@ -111,4 +117,12 @@ class MainWindow(QMainWindow):
             self.switch_page(nav_items[0][1])
 
     def switch_page(self, name):
-        self.content_stack.setCurrentWidget(self.pages[name])
+        page = self.pages[name]
+        if hasattr(page, 'refresh_stats'):
+            page.refresh_stats()
+        elif hasattr(page, 'refresh_table'):
+            page.refresh_table()
+        elif hasattr(page, 'refresh_report'):
+            page.refresh_report()
+
+        self.content_stack.setCurrentWidget(page)

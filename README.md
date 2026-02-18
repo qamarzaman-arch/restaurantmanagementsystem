@@ -4,7 +4,8 @@ A full-featured, offline desktop invoicing and management software for restauran
 
 ## Features
 
-- **Dashboard**: Real-time overview of daily sales, orders, and active tables.
+- **Dashboard**: Real-time overview of daily sales, orders, and active tables with interactive charts (Pie, Bar, Line) for deep insights.
+- **Customer Management**: Keep track of customer contact information and loyalty points.
 - **Table Management**: Visual status and management of restaurant tables.
 - **Menu Management**: Categorized menu items with easy CRUD operations.
 - **Order & Billing**:
@@ -13,8 +14,9 @@ A full-featured, offline desktop invoicing and management software for restauran
   - Automatic tax and discount calculations.
   - Multiple payment methods (Cash, Card, Online).
   - Professional PDF invoice generation.
-- **Reporting**:
-  - Sales summary with date filtering.
+- **Reporting & Insights**:
+  - Sales summary with robust date filtering.
+  - Advanced metrics like Average Order Value and Most Popular Item.
   - Export sales data to CSV for external analysis.
 - **Security**:
   - Secure login system with hashed passwords.
@@ -23,10 +25,9 @@ A full-featured, offline desktop invoicing and management software for restauran
 ## Technologies Used
 
 - **Python 3.12**
-- **PyQt6**: For a modern and responsive GUI.
+- **PyQt6 & PyQt6-Charts**: For a modern GUI with interactive data visualizations.
 - **SQLite**: For fast, offline data storage.
 - **ReportLab**: For professional PDF generation.
-- **Pandas**: For data reporting and export.
 - **Werkzeug**: For secure password hashing.
 
 ## Setup Instructions
