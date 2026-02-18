@@ -40,7 +40,7 @@ class MenuManagementScreen(QWidget):
 
         self.item_price = QDoubleSpinBox()
         self.item_price.setMaximum(10000)
-        form_layout.addWidget(QLabel("Price"))
+        form_layout.addWidget(QLabel("Price (Rs.)"))
         form_layout.addWidget(self.item_price)
 
         self.item_desc = QLineEdit()
@@ -58,7 +58,7 @@ class MenuManagementScreen(QWidget):
         # Right side: Table
         self.items_table = QTableWidget()
         self.items_table.setColumnCount(5)
-        self.items_table.setHorizontalHeaderLabels(["ID", "Name", "Category", "Price", "Action"])
+        self.items_table.setHorizontalHeaderLabels(["ID", "Name", "Category", "Price (Rs.)", "Action"])
         self.items_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.items_table, 3)
 

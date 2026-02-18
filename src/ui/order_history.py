@@ -18,7 +18,7 @@ class OrderHistoryScreen(QWidget):
 
         self.orders_table = QTableWidget()
         self.orders_table.setColumnCount(6)
-        self.orders_table.setHorizontalHeaderLabels(["ID", "Date", "Type", "Total", "Payment", "Action"])
+        self.orders_table.setHorizontalHeaderLabels(["ID", "Date", "Type", "Total (Rs.)", "Payment", "Action"])
         self.orders_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.orders_table)
 

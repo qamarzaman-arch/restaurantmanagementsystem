@@ -1,5 +1,7 @@
 import sqlite3
 import os
+import datetime
+import shutil
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class DatabaseManager:
@@ -116,6 +118,19 @@ class DatabaseManager:
                     phone TEXT UNIQUE,
                     email TEXT,
                     points INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
+            # Expenses table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS expenses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    category TEXT,
+                    amount REAL NOT NULL,
+                    description TEXT,
+                    expense_date DATE DEFAULT CURRENT_DATE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -375,6 +390,58 @@ class DatabaseManager:
         """
         with self.get_connection() as conn:
             return [dict(row) for row in conn.execute(query).fetchall()]
+
+    # Backup and Restore
+    def backup_database(self, backup_path):
+        try:
+            shutil.copy2(self.db_path, backup_path)
+            return True
+        except Exception as e:
+            print(f"Backup failed: {e}")
+            return False
+
+    def restore_database(self, backup_path):
+        try:
+            # We should close any existing connections if possible,
+            # but in this simple app, we'll just overwrite.
+            shutil.copy2(backup_path, self.db_path)
+            return True
+        except Exception as e:
+            print(f"Restore failed: {e}")
+            return False
+
+    # Expense Management
+    def add_expense(self, title, category, amount, description, expense_date=None):
+        if not expense_date:
+            expense_date = datetime.date.today().isoformat()
+        with self.get_connection() as conn:
+            conn.execute(
+                "INSERT INTO expenses (title, category, amount, description, expense_date) VALUES (?, ?, ?, ?, ?)",
+                (title, category, amount, description, expense_date)
+            )
+
+    def get_expenses(self, date_from=None, date_to=None):
+        query = "SELECT * FROM expenses WHERE 1=1"
+        params = []
+        if date_from:
+            query += " AND expense_date >= ?"
+            params.append(date_from)
+        if date_to:
+            query += " AND expense_date <= ?"
+            params.append(date_to)
+        query += " ORDER BY expense_date DESC"
+        with self.get_connection() as conn:
+            return [dict(row) for row in conn.execute(query, params).fetchall()]
+
+    def delete_expense(self, expense_id):
+        with self.get_connection() as conn:
+            conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+
+    def get_total_expenses_today(self):
+        query = "SELECT SUM(amount) as total FROM expenses WHERE expense_date = date('now')"
+        with self.get_connection() as conn:
+            res = conn.execute(query).fetchone()
+            return res['total'] if res['total'] else 0.0
 
     def get_top_selling_items(self, limit=5):
         query = """

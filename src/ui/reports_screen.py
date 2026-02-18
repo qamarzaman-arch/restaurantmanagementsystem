@@ -43,7 +43,7 @@ class ReportsScreen(QWidget):
         self.report_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.report_table)
 
-        self.summary_label = QLabel("<b>Total Sales: $0.00</b>")
+        self.summary_label = QLabel("<b>Total Sales: Rs. 0.00</b>")
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.summary_label)
 
@@ -51,7 +51,7 @@ class ReportsScreen(QWidget):
         insights_frame = QFrame()
         insights_frame.setStyleSheet("background-color: #ecf0f1; border-radius: 5px; padding: 10px;")
         self.insights_layout = QHBoxLayout(insights_frame)
-        self.avg_order_label = QLabel("Avg Order: $0.00")
+        self.avg_order_label = QLabel("Avg Order: Rs. 0.00")
         self.most_popular_label = QLabel("Popular: N/A")
         self.insights_layout.addWidget(self.avg_order_label)
         self.insights_layout.addWidget(self.most_popular_label)
@@ -74,19 +74,19 @@ class ReportsScreen(QWidget):
             self.report_table.setItem(i, 4, QTableWidgetItem(f"{order['total']:.2f}"))
             total += order['total']
 
-        self.summary_label.setText(f"<b>Total Sales: ${total:.2f}</b>")
+        self.summary_label.setText(f"<b>Total Sales: Rs. {total:.2f}</b>")
         self.current_orders = orders
 
         # Update Insights
         if orders:
             avg = total / len(orders)
-            self.avg_order_label.setText(f"Avg Order: ${avg:.2f}")
+            self.avg_order_label.setText(f"Avg Order: Rs. {avg:.2f}")
 
             top_items = self.db.get_top_selling_items(1)
             if top_items:
                 self.most_popular_label.setText(f"Most Popular: {top_items[0]['name']}")
         else:
-            self.avg_order_label.setText("Avg Order: $0.00")
+            self.avg_order_label.setText("Avg Order: Rs. 0.00")
             self.most_popular_label.setText("Most Popular: N/A")
 
     def export_csv(self):

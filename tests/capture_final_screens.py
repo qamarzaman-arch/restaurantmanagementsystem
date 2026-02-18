@@ -7,6 +7,13 @@ from src.ui.main_window import MainWindow
 
 def capture_all():
     app = QApplication(sys.argv)
+
+    # Load Styles
+    style_path = "src/ui/styles.qss"
+    if os.path.exists(style_path):
+        with open(style_path, "r") as f:
+            app.setStyleSheet(f.read())
+
     db = DatabaseManager("test_final.db")
 
     # Setup some test data

@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QFileDialog, QMessageBox, QFrame, QComboBox)
+                             QLineEdit, QPushButton, QFileDialog, QMessageBox, QFrame, QComboBox, QScrollArea)
 from PyQt6.QtCore import Qt
 from src.utils.printer_utils import PrinterUtils
 import os
@@ -16,9 +16,16 @@ class SettingsScreen(QWidget):
 
         layout.addWidget(QLabel("<h1 style='color: #2c3e50;'>Restaurant Settings</h1>"))
 
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+
         form_frame = QFrame()
-        form_frame.setStyleSheet("background-color: white; border-radius: 8px; padding: 20px; border: 1px solid #dcdde1;")
+        form_frame.setObjectName("settingsFrame")
         form_layout = QVBoxLayout(form_frame)
+        form_layout.setContentsMargins(20, 20, 20, 20)
+        form_layout.setSpacing(10)
 
         # Restaurant Name
         self.name_input = QLineEdit()
@@ -64,13 +71,29 @@ class SettingsScreen(QWidget):
         form_layout.addWidget(QLabel("Thermal Printer Name"))
         form_layout.addWidget(self.printer_combo)
 
+        # Backup & Restore
+        form_layout.addWidget(QLabel("Database Management"))
+        db_mgmt_layout = QHBoxLayout()
+        backup_btn = QPushButton("Backup Database")
+        backup_btn.clicked.connect(self.backup_db)
+        db_mgmt_layout.addWidget(backup_btn)
+
+        restore_btn = QPushButton("Restore Database")
+        restore_btn.setObjectName("dangerButton")
+        restore_btn.clicked.connect(self.restore_db)
+        db_mgmt_layout.addWidget(restore_btn)
+        form_layout.addLayout(db_mgmt_layout)
+
         save_btn = QPushButton("Save Settings")
         save_btn.setObjectName("actionButton")
+        save_btn.setMinimumHeight(40)
         save_btn.clicked.connect(self.save_settings)
         form_layout.addWidget(save_btn)
 
-        layout.addWidget(form_frame)
-        layout.addStretch()
+        scroll_layout.addWidget(form_frame)
+        scroll_layout.addStretch()
+        scroll.setWidget(scroll_content)
+        layout.addWidget(scroll)
 
     def select_logo(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Logo", "", "Images (*.png *.jpg *.jpeg)")
@@ -87,3 +110,23 @@ class SettingsScreen(QWidget):
             QMessageBox.information(self, "Success", "Settings saved successfully")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings: {str(e)}")
+
+    def backup_db(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Backup Database", "", "Database Files (*.db)")
+        if file_path:
+            if self.db.backup_database(file_path):
+                QMessageBox.information(self, "Success", f"Database backed up to {file_path}")
+            else:
+                QMessageBox.critical(self, "Error", "Failed to backup database")
+
+    def restore_db(self):
+        reply = QMessageBox.question(self, 'Confirm Restore',
+                                   "Restoring will overwrite current data. Are you sure?",
+                                   QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            file_path, _ = QFileDialog.getOpenFileName(self, "Restore Database", "", "Database Files (*.db)")
+            if file_path:
+                if self.db.restore_database(file_path):
+                    QMessageBox.information(self, "Success", "Database restored. Please restart the application.")
+                else:
+                    QMessageBox.critical(self, "Error", "Failed to restore database")

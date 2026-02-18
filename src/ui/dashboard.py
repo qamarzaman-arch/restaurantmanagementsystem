@@ -22,16 +22,18 @@ class DashboardScreen(QWidget):
 
         # Stats Cards
         stats_layout = QGridLayout()
-        self.total_sales = self.create_stat_card("Total Sales Today", "0.00")
+        self.total_sales = self.create_stat_card("Sales Today", "0.00")
+        self.total_expenses = self.create_stat_card("Expenses Today", "0.00")
         self.total_orders = self.create_stat_card("Orders Today", "0")
         self.active_tables = self.create_stat_card("Active Tables", "0")
         self.low_stock_card = self.create_stat_card("Low Stock Items", "0")
         self.low_stock_card.setStyleSheet(self.low_stock_card.styleSheet() + " QFrame { border-left: 5px solid #e74c3c; }")
 
         stats_layout.addWidget(self.total_sales, 0, 0)
-        stats_layout.addWidget(self.total_orders, 0, 1)
-        stats_layout.addWidget(self.active_tables, 0, 2)
-        stats_layout.addWidget(self.low_stock_card, 0, 3)
+        stats_layout.addWidget(self.total_expenses, 0, 1)
+        stats_layout.addWidget(self.total_orders, 0, 2)
+        stats_layout.addWidget(self.active_tables, 1, 0)
+        stats_layout.addWidget(self.low_stock_card, 1, 1)
         layout.addLayout(stats_layout)
 
         # Charts Row 1
@@ -99,15 +101,23 @@ class DashboardScreen(QWidget):
     def refresh_stats(self):
         # Update Stats Cards
         orders = self.db.get_all_orders(status='Completed')
-        total_revenue = sum(o['total'] for o in orders)
-        count = len(orders)
+        # Filter for today
+        import datetime
+        today = datetime.date.today().isoformat()
+        today_orders = [o for o in orders if o['created_at'].startswith(today)]
+        total_revenue = sum(o['total'] for o in today_orders)
+        count = len(today_orders)
+
+        total_expenses = self.db.get_total_expenses_today()
+
         tables = self.db.get_tables()
         active = len([t for t in tables if t['status'] == 'Occupied'])
 
         inventory = self.db.get_inventory()
         low_stock_count = len([i for i in inventory if i['quantity'] <= i['min_threshold']])
 
-        self.total_sales.value_label.setText(f"${total_revenue:.2f}")
+        self.total_sales.value_label.setText(f"Rs. {total_revenue:.2f}")
+        self.total_expenses.value_label.setText(f"Rs. {total_expenses:.2f}")
         self.total_orders.value_label.setText(str(count))
         self.active_tables.value_label.setText(str(active))
         self.low_stock_card.value_label.setText(str(low_stock_count))
@@ -181,6 +191,6 @@ class DashboardScreen(QWidget):
         series.attachAxis(axisX)
 
         axisY = QValueAxis()
-        axisY.setTitleText("Total Sales ($)")
+        axisY.setTitleText("Total Sales (Rs.)")
         chart.addAxis(axisY, Qt.AlignmentFlag.AlignLeft)
         series.attachAxis(axisY)

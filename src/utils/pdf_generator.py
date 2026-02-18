@@ -34,7 +34,7 @@ class PDFGenerator:
         elements.append(Spacer(1, 10))
 
         # Items Table
-        data = [["Item", "Qty", "Price", "Total"]]
+        data = [["Item", "Qty", "Price(Rs.)", "Total(Rs.)"]]
         for item in order['items']:
             data.append([
                 item['name'],
@@ -56,10 +56,10 @@ class PDFGenerator:
         elements.append(Spacer(1, 10))
 
         # Totals
-        elements.append(Paragraph(f"Subtotal: {order['subtotal']:.2f}", styles['Normal']))
-        elements.append(Paragraph(f"Discount: {order['discount']:.2f}", styles['Normal']))
-        elements.append(Paragraph(f"Tax: {order['tax']:.2f}", styles['Normal']))
-        elements.append(Paragraph(f"<b>Total: {order['total']:.2f}</b>", styles['Normal']))
+        elements.append(Paragraph(f"Subtotal: Rs. {order['subtotal']:.2f}", styles['Normal']))
+        elements.append(Paragraph(f"Discount: Rs. {order['discount']:.2f}", styles['Normal']))
+        elements.append(Paragraph(f"Tax: Rs. {order['tax']:.2f}", styles['Normal']))
+        elements.append(Paragraph(f"<b>Total: Rs. {order['total']:.2f}</b>", styles['Normal']))
         elements.append(Spacer(1, 10))
 
         elements.append(Paragraph("Thank you for visiting!", styles['Italic']))

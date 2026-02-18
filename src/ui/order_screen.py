@@ -41,7 +41,7 @@ class OrderScreen(QWidget):
         search_layout.addWidget(QLabel("Search Item:"))
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Enter item name...")
-        self.search_input.textChanged.connect(lambda: self.refresh_items())
+        self.search_input.textChanged.connect(lambda: self.refresh_items(from_category_click=False))
         search_layout.addWidget(self.search_input)
         left_layout.addLayout(search_layout)
 
@@ -74,7 +74,7 @@ class OrderScreen(QWidget):
         billing_frame.setFrameShape(QFrame.Shape.StyledPanel)
         bill_layout = QGridLayout(billing_frame)
 
-        bill_layout.addWidget(QLabel("Subtotal:"), 0, 0)
+        bill_layout.addWidget(QLabel("Subtotal (Rs.):"), 0, 0)
         self.subtotal_label = QLabel("0.00")
         bill_layout.addWidget(self.subtotal_label, 0, 1)
 
@@ -83,12 +83,12 @@ class OrderScreen(QWidget):
         self.discount_input.valueChanged.connect(self.update_totals)
         bill_layout.addWidget(self.discount_input, 1, 1)
 
-        bill_layout.addWidget(QLabel("Tax:"), 2, 0)
+        bill_layout.addWidget(QLabel("Tax (Rs.):"), 2, 0)
         self.tax_label = QLabel("0.00")
         bill_layout.addWidget(self.tax_label, 2, 1)
 
-        bill_layout.addWidget(QLabel("<b>Total:</b>"), 3, 0)
-        self.total_label = QLabel("<b>0.00</b>")
+        bill_layout.addWidget(QLabel("<b>Total (Rs.):</b>"), 3, 0)
+        self.total_label = QLabel("<b>Rs. 0.00</b>")
         bill_layout.addWidget(self.total_label, 3, 1)
 
         right_layout.addWidget(billing_frame)
@@ -99,6 +99,11 @@ class OrderScreen(QWidget):
         self.payment_method.addItems(["Cash", "Card", "Online"])
         pay_layout.addWidget(QLabel("Payment:"))
         pay_layout.addWidget(self.payment_method)
+
+        self.kot_btn = QPushButton("Print KOT")
+        self.kot_btn.setEnabled(False)
+        self.kot_btn.clicked.connect(self.print_kot)
+        pay_layout.addWidget(self.kot_btn)
 
         self.checkout_btn = QPushButton("Checkout & Print")
         self.checkout_btn.setObjectName("actionButton")
@@ -127,19 +132,19 @@ class OrderScreen(QWidget):
 
         cats = self.db.get_categories()
         all_btn = QPushButton("All")
-        all_btn.clicked.connect(lambda: self.refresh_items(None))
+        all_btn.clicked.connect(lambda: self.refresh_items(None, from_category_click=True))
         self.cat_tabs.addWidget(all_btn)
 
         for cat in cats:
             btn = QPushButton(cat['name'])
-            btn.clicked.connect(lambda checked, c=cat['id']: self.refresh_items(c))
+            btn.clicked.connect(lambda checked, c=cat['id']: self.refresh_items(c, from_category_click=True))
             self.cat_tabs.addWidget(btn)
 
-    def refresh_items(self, cat_id=None):
+    def refresh_items(self, cat_id=None, from_category_click=False):
         if not hasattr(self, 'current_cat_id'):
             self.current_cat_id = None
 
-        if cat_id is not None:
+        if from_category_click:
             self.current_cat_id = cat_id
 
         # Clear grid robustly
@@ -166,6 +171,7 @@ class OrderScreen(QWidget):
         self.cart_items = []
         self.refresh_cart_table()
         self.checkout_btn.setEnabled(True)
+        self.kot_btn.setEnabled(True)
         self.start_order_btn.setEnabled(False)
         self.refresh_tables()
 
@@ -205,8 +211,20 @@ class OrderScreen(QWidget):
         res = BillingLogic.calculate_totals(self.cart_items, tax_rate, discount)
         self.subtotal_label.setText(f"{res['subtotal']:.2f}")
         self.tax_label.setText(f"{res['tax']:.2f}")
-        self.total_label.setText(f"<b>{res['total']:.2f}</b>")
+        self.total_label.setText(f"<b>Rs. {res['total']:.2f}</b>")
         self.current_totals = res
+
+    def print_kot(self):
+        if not self.cart_items:
+            QMessageBox.warning(self, "Empty Order", "No items to print in KOT")
+            return
+
+        try:
+            order_data = {'id': self.current_order_id, 'items': self.cart_items, 'table_number': self.table_combo.currentText()}
+            PrinterUtils.print_kot(order_data)
+            QMessageBox.information(self, "KOT Printed", "Kitchen Order Ticket has been sent to the printer")
+        except Exception as e:
+            QMessageBox.critical(self, "Printing Error", f"Failed to print KOT: {str(e)}")
 
     def checkout(self):
         if not self.cart_items:
@@ -256,6 +274,7 @@ class OrderScreen(QWidget):
             self.refresh_cart_table()
             self.refresh_tables()
             self.checkout_btn.setEnabled(False)
+            self.kot_btn.setEnabled(False)
             self.start_order_btn.setEnabled(True)
         except Exception as e:
             QMessageBox.critical(self, "Checkout Error", f"An error occurred during checkout: {str(e)}")

@@ -11,6 +11,7 @@ from src.ui.inventory_mgmt import InventoryManagementScreen
 from src.ui.settings_screen import SettingsScreen
 from src.ui.user_mgmt import UserManagementScreen
 from src.ui.order_history import OrderHistoryScreen
+from src.ui.expense_mgmt import ExpenseManagementScreen
 
 class MainWindow(QMainWindow):
     def __init__(self, db_manager, user):
@@ -49,6 +50,7 @@ class MainWindow(QMainWindow):
             ("Menu Management", "menu"),
             ("Table Management", "tables"),
             ("Inventory", "inventory"),
+            ("Expenses", "expenses"),
             ("Reports", "reports"),
             ("Users", "users"),
             ("Settings", "settings"),
@@ -56,7 +58,7 @@ class MainWindow(QMainWindow):
 
         # Filter based on role if needed
         if self.user['role'] != 'Admin':
-            nav_items = [i for i in nav_items if i[1] in ['dashboard', 'orders', 'history', 'customers', 'tables']]
+            nav_items = [i for i in nav_items if i[1] in ['dashboard', 'orders', 'history', 'customers', 'tables', 'expenses']]
 
         for label, name in nav_items:
             btn = QPushButton(label)
@@ -111,6 +113,10 @@ class MainWindow(QMainWindow):
         # Order History
         self.pages['history'] = OrderHistoryScreen(self.db)
         self.content_stack.addWidget(self.pages['history'])
+
+        # Expense Management
+        self.pages['expenses'] = ExpenseManagementScreen(self.db)
+        self.content_stack.addWidget(self.pages['expenses'])
 
         # User Management
         self.pages['users'] = UserManagementScreen(self.db)

@@ -41,6 +41,11 @@ QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {
     border: 1px solid #bdc3c7;
     border-radius: 4px;
     background-color: white;
+    min-height: 20px;
+}
+
+QLabel {
+    padding: 2px;
 }
 
 QTableWidget {
@@ -85,4 +90,16 @@ QLabel#titleLabel {
 
 #sidebar QPushButton:checked {
     background-color: #3498db;
+}
+
+#settingsFrame {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #dcdde1;
+}
+
+#settingsFrame QLabel {
+    font-weight: bold;
+    color: #34495e;
+    margin-top: 10px;
 }
