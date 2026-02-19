@@ -4,3 +4,4 @@ reportlab
 pytest
 pytest-qt
 werkzeug
+pyinstaller

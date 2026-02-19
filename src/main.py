@@ -27,7 +27,13 @@ class RestaurantApp:
         self.login_window.show()
 
     def load_styles(self):
-        style_path = os.path.join(os.path.dirname(__file__), "ui", "styles.qss")
+        # Handle path for PyInstaller bundle
+        if hasattr(sys, '_MEIPASS'):
+            base_path = sys._MEIPASS
+            style_path = os.path.join(base_path, "src", "ui", "styles.qss")
+        else:
+            # When running from source, styles are relative to this file
+            style_path = os.path.join(os.path.dirname(__file__), "ui", "styles.qss")
         if os.path.exists(style_path):
             with open(style_path, "r") as f:
                 self.app.setStyleSheet(f.read())

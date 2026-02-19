@@ -6,7 +6,7 @@ from src.logic.billing import BillingLogic
 
 @pytest.fixture
 def db():
-    db_path = "test_pytest_final.db"
+    db_path = os.path.abspath("test_pytest_final.db")
     if os.path.exists(db_path): os.remove(db_path)
     db_mgr = DatabaseManager(db_path)
     yield db_mgr

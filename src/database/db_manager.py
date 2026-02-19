@@ -1,13 +1,31 @@
 import sqlite3
 import os
+import sys
 import datetime
 import shutil
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class DatabaseManager:
-    def __init__(self, db_path="restaurant.db"):
-        self.db_path = db_path
+    def __init__(self, db_name="restaurant.db"):
+        self.db_path = self._get_db_path(db_name)
         self.init_db()
+
+    def _get_db_path(self, db_name):
+        # If it's already an absolute path, use it as is (useful for tests)
+        if os.path.isabs(db_name):
+            return db_name
+
+        # Determine a professional path for the database
+        # On Windows, use %APPDATA%/RestaurantOS/restaurant.db
+        if sys.platform == "win32":
+            base_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "RestaurantOS")
+        else:
+            base_dir = os.path.join(os.path.expanduser("~"), ".restaurant_os")
+
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+
+        return os.path.join(base_dir, db_name)
 
     def get_connection(self):
         conn = sqlite3.connect(self.db_path)

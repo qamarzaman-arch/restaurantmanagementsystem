@@ -63,3 +63,22 @@ python -m src.main
 
 ## Local Development & Troubleshooting
 If you encounter `QFont::setPointSize` warnings on Windows, the system has been updated to set a default font size of 10pt. These warnings are typically non-blocking. Ensure your display scaling settings are compatible with high-DPI applications.
+
+## Packaging for Distribution (Windows)
+
+To create a professional, standalone installer for Windows that does not require Python to be installed on the client machine:
+
+### Step 1: Build the Executable
+1. Open the project folder on a Windows machine.
+2. Double-click `scripts/build_windows.bat`.
+3. This will create a `dist/RestaurantOS` folder containing the application.
+
+### Step 2: Create the Installer
+1. Download and install [Inno Setup](https://jrsoftware.org/isdl.php).
+2. Right-click `scripts/installer_setup.iss` and select "Compile".
+3. Once finished, a professional installer named `RestaurantOS_Setup.exe` will be created in the `installer/` folder.
+
+### No-Warning Distribution
+Windows may show a "Windows protected your PC" (SmartScreen) warning for new, unsigned applications. To remove this for professional sale:
+1. **Code Signing**: You should obtain a Code Signing Certificate (from vendors like DigiCert or Sectigo) and sign the generated `.exe` file using `signtool`.
+2. **Reputation**: As more users install your software, Microsoft SmartScreen's reputation for your app will improve, and the warnings will eventually disappear even without signing (though signing is highly recommended for commercial software).
