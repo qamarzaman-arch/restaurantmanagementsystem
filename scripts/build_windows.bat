@@ -1,24 +1,32 @@
 @echo off
 echo Starting Build Process for RestaurantOS...
 
-:: Check for virtual environment
-if not exist .venv (
+:: Ensure script runs from repository root (scripts\build_windows.bat -> repo_root\scripts)
+pushd "%~dp0\.."
+
+:: Create virtual environment if missing
+if not exist ".venv" (
     echo Creating virtual environment...
     python -m venv .venv
 )
 
-:: Activate virtual environment
-call .venv\Scripts\activate
+:: Prefer venv python executable to avoid activation issues across shells
+set "VENV_PY=%CD%\.venv\Scripts\python.exe"
+if not exist "%VENV_PY%" (
+    echo Virtual environment python not found, falling back to system python.
+    set "VENV_PY=python"
+)
 
 :: Install dependencies
 echo Installing dependencies...
-pip install -r requirements.txt
+"%VENV_PY%" -m pip install -r "%CD%\requirements.txt"
 
-:: Run PyInstaller
+:: Run PyInstaller using the venv python to ensure correct interpreter
 echo Bundling application with PyInstaller...
-pyinstaller --clean restaurant_os.spec
+"%VENV_PY%" -m PyInstaller --clean "%CD%\restaurant_os.spec"
 
 echo.
 echo Build Complete!
 echo The executable can be found in the "dist/RestaurantOS" folder.
+popd
 pause
