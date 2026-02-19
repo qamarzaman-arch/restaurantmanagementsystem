@@ -1,13 +1,22 @@
 import sys
 import os
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt
 from src.database.db_manager import DatabaseManager
 from src.ui.login_window import LoginWindow
 from src.ui.main_window import MainWindow
 
 class RestaurantApp:
     def __init__(self):
+        # High DPI support for Qt6
+        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         self.app = QApplication(sys.argv)
+
+        # Set a default font to avoid "Point size <= 0" warnings on some systems
+        default_font = QFont("Segoe UI", 10)
+        self.app.setFont(default_font)
+
         self.db = DatabaseManager("restaurant.db")
 
         # Load Styles
